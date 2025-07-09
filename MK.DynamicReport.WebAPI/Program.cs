@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IReportDefinitionRepository, ReportDefinitionRepository>();
+builder.Services.AddScoped<IReportHistoryRepository, ReportHistoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);

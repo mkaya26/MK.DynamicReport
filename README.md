@@ -64,6 +64,16 @@ CREATE TABLE Users (
     PasswordHash NVARCHAR(500) NOT NULL,
     Role NVARCHAR(50) NOT NULL
 );
+
+CREATE TABLE ReportHistories (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    ReportDefinitionId INT NOT NULL,
+    ReportName NVARCHAR(250) NOT NULL,
+    ExportFormat NVARCHAR(50) NOT NULL,
+    FilePath NVARCHAR(500) NOT NULL,
+    CreatedDate DATETIME NOT NULL,
+    CreatedBy NVARCHAR(100) NULL
+);
 ```
 
 > 🔗 Not: Hangfire tabloları otomatik olarak ilk çalıştırmada oluşur.
@@ -77,6 +87,7 @@ CREATE TABLE Users (
 - `/api/Report/executeReport` ➔ Dinamik SQL raporu çalıştırır.
 - `/api/Report/export/pdf` ➔ PDF export alır.
 - `/api/Report/export/excel` ➔ Excel export alır.
+- `/api/ReportHistory/getall` ➔ Rapor geçmişlerini listeler.
 - `/hangfire` ➔ Zamanlanmış raporları yönetmek için Hangfire Dashboard (güvenlik eklenmeli).
 
 ---
@@ -88,12 +99,12 @@ CREATE TABLE Users (
 - ✅ JWT kimlik doğrulama & rol bazlı yetkilendirme
 - ✅ Hangfire ile zamanlanmış iş altyapısı
 - ✅ Export edilen raporların e-posta ile otomatik gönderimi
+- ✅ Rapor geçmişlerinin veritabanında saklanması
 
 ---
 
 ## 🔗 Yol Haritası (Bekleyen Tasklar)
 
-- [ ] **Task 9.2:** Rapor sonuçlarını veritabanında saklama (oluşturulan exportların geçmişini kaydetme ve yönetme)
 - [ ] **Task 9.3:** Grafik ve görsellik desteği (raporları görsel olarak zenginleştirmek için grafik desteği)
 - [ ] **Task 9.4:** Rapor bazlı yetkilendirme (her kullanıcının hangi raporları görebileceğini yönetme)
 - [ ] **Task 9.5:** Çoklu dil desteği (uygulamanın birden fazla dili desteklemesi)
