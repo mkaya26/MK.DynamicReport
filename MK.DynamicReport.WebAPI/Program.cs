@@ -11,6 +11,7 @@ using MK.DynamicReport.Domain.Settings;
 using SixLabors.ImageSharp;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.IdentityModel.Abstractions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,7 @@ builder.Services.AddScoped<IReportDefinitionRepository, ReportDefinitionReposito
 builder.Services.AddScoped<IReportHistoryRepository, ReportHistoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IGraphicsService, GraphicsService>();
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddTransient<ReportBackgroundJobService>();
 // 

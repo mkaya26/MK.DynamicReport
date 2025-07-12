@@ -9,16 +9,21 @@ using NPOI.XSSF.UserModel;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
 using QuestPDF.Helpers;
+using Hangfire;
+using FluentEmail.Core;
+using MK.DynamicReport.Domain.Entities;
+using ScottPlot.Plottables;
 
 namespace MK.DynamicReport.Infrastructure.Services
 {
     public class ReportService : IReportService
     {
         private readonly IConfiguration _configuration;
-
-        public ReportService(IConfiguration configuration)
+        private readonly IFluentEmail _fluentEmail;
+        public ReportService(IConfiguration configuration, IFluentEmail fluentEmail)
         {
             _configuration = configuration;
+            _fluentEmail = fluentEmail;
         }
         public string GenerateSql(string reportJson)
         {
@@ -219,6 +224,110 @@ namespace MK.DynamicReport.Infrastructure.Services
             return value?.ToString() ?? "";
         }
 
+        public byte[] ExportToPdfWithChart(IEnumerable<Dictionary<string, object>> data)
+        {
+            QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
+            // Burada grafik üretiyoruz (mevcut GraphicsService kullanılacak)
+            var graphicsService = new GraphicsService(); // İstersen DI ile verebiliriz
+            var chartBytes = graphicsService.GenerateSampleChart();
+
+            // QuestPDF Document → Grafik + Tablo birleştir
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Margin(20);
+                    page.Header().Text("Dinamik Rapor + Grafik").FontSize(16).Bold().AlignCenter();
+
+                    page.Content().Column(column =>
+                    {
+                        // Grafik ekle
+                        column.Item().Container().Height(200).Image(chartBytes);
+
+
+                        // Tablo ekle
+                        column.Item().Table(table =>
+                        {
+                            if (!data.Any())
+                            {
+                                table.ColumnsDefinition(columns => columns.RelativeColumn());
+                                table.Cell().Text("Veri yok");
+                                return;
+                            }
+
+                            var headers = data.First().Keys.ToList();
+
+                            table.ColumnsDefinition(columns =>
+                            {
+                                foreach (var _ in headers)
+                                    columns.RelativeColumn();
+                            });
+
+                            // Başlıklar
+                            foreach (var header in headers)
+                            {
+                                table.Cell().Element(CellStyle).Text(header).FontSize(12).Bold();
+                            }
+
+                            // Veriler
+                            foreach (var record in data)
+                            {
+                                foreach (var value in record.Values)
+                                {
+                                    var formattedValue = FormatValue(value);
+                                    table.Cell().Element(CellStyle).Text(formattedValue);
+                                }
+                            }
+
+                            static IContainer CellStyle(IContainer container) =>
+                                container.Border(1).Padding(5).AlignLeft().AlignMiddle();
+                        });
+                    });
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+        public async Task ScheduleReportAsync(ScheduledReportRequestDto request)
+        {
+            BackgroundJob.Schedule(
+                () => ExecuteAndSendReportAsync(
+                    request.ReportJson,
+                    request.ExportType,
+                    request.EmailTo,
+                    request.FileName),
+                request.ScheduledTime
+            );
+        }
+        public async Task ExecuteAndSendReportAsync(string reportJson, string exportType, string emailTo, string fileName)
+        {
+            var data = await ExecuteReportAsync(reportJson);
+
+            byte[] fileBytes;
+            string mimeType;
+
+            if (exportType.ToLower() == "pdf")
+            {
+                fileBytes = ExportToPdf(data);
+                mimeType = "application/pdf";
+            }
+            else
+            {
+                fileBytes = ExportToExcelWithNPOI(data);
+                mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            }
+             await _fluentEmail
+            .To(emailTo)
+               .Subject($"Zamanlanmış Rapor")
+               .Body("Rapor çıktısı ektedir.", true)
+               .Attach(new FluentEmail.Core.Models.Attachment
+               {
+                   Data = new MemoryStream(fileBytes),
+                   Filename = fileName,
+                   ContentType = "application/pdf"
+               })
+               .SendAsync();
+        }
     }
 }

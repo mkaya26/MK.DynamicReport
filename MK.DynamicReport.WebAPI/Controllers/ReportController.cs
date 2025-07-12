@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using MK.DynamicReport.Domain.Interfaces;
 using MK.DynamicReport.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
+using MK.DynamicReport.WebAPI.Models;
 
 namespace MK.DynamicReport.WebAPI.Controllers
 {
@@ -86,6 +87,23 @@ namespace MK.DynamicReport.WebAPI.Controllers
 
             var data = await _reportService.ExecuteReportAsync(reportDefinition.ReportJson);
             return Ok(data);
+        }
+        [HttpPost("export-pdf")]
+        public async Task<IActionResult> ExportReport([FromBody] ReportExportRequest request)
+        {
+            var data = await _reportService.ExecuteReportAsync(request.ReportJson);
+
+            byte[] pdfBytes = request.IncludeChart
+                ? _reportService.ExportToPdfWithChart(data)
+                : _reportService.ExportToPdf(data);
+
+            return File(pdfBytes, "application/pdf", "Report.pdf");
+        }
+        [HttpPost("schedule-report")]
+        public async Task<IActionResult> ScheduleReport([FromBody] ScheduledReportRequestDto request)
+        {
+            await _reportService.ScheduleReportAsync(request);
+            return Ok("Rapor başarıyla zamanlandı.");
         }
 
     }
