@@ -10,6 +10,8 @@ namespace MK.DynamicReport.Application.Interfaces
         byte[] ExportToPdf(IEnumerable<Dictionary<string, object>> data);
         byte[] ExportToPdfWithChart(IEnumerable<Dictionary<string, object>> data);
         Task ScheduleReportAsync(ScheduledReportRequestDto request);
+        List<ScheduledJobDto> GetScheduledJobs();
+        bool DeleteScheduledJob(string jobId);
 
     }
 }

@@ -105,6 +105,19 @@ namespace MK.DynamicReport.WebAPI.Controllers
             await _reportService.ScheduleReportAsync(request);
             return Ok("Rapor başarıyla zamanlandı.");
         }
+        [HttpGet("scheduled-jobs")]
+        public IActionResult GetScheduledJobs()
+        {
+            var jobs = _reportService.GetScheduledJobs();
+            return Ok(jobs);
+        }
+
+        [HttpDelete("scheduled-jobs/{jobId}")]
+        public IActionResult DeleteScheduledJob(string jobId)
+        {
+            var success = _reportService.DeleteScheduledJob(jobId);
+            return success ? Ok("Job silindi.") : BadRequest("Job silinemedi.");
+        }
 
     }
 }

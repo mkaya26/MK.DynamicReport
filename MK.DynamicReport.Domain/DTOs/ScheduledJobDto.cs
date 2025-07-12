@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MK.DynamicReport.Domain.DTOs
+﻿namespace MK.DynamicReport.Domain.DTOs
 {
-    internal class ScheduledJobDto
+    public class ScheduledJobDto
     {
+        public string JobId { get; set; }
+        public string JobName { get; set; }
+        public string Method { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime ScheduledAt { get; set; }
     }
 }

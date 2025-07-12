@@ -329,5 +329,25 @@ namespace MK.DynamicReport.Infrastructure.Services
                })
                .SendAsync();
         }
+        public List<ScheduledJobDto> GetScheduledJobs()
+        {
+            var monitoringApi = JobStorage.Current.GetMonitoringApi();
+            var scheduledJobs = monitoringApi.ScheduledJobs(0, 50);
+
+            var result = scheduledJobs.Select(j => new ScheduledJobDto
+            {
+                JobId = j.Key,
+                JobName = j.Value.Job.Type.Name,
+                Method = j.Value.Job.Method.Name,
+                CreatedAt = j.Value.ScheduledAt ?? DateTime.Now,
+                ScheduledAt = j.Value.EnqueueAt
+            }).ToList();
+
+            return result;
+        }
+        public bool DeleteScheduledJob(string jobId)
+        {
+            return BackgroundJob.Delete(jobId);
+        }
     }
 }
